@@ -4,9 +4,10 @@
 #include <string.h>
 #include "palindrom.h"
 
-int palindrom_func(char *str, int size)
+int palindrom(char *str, int size)
 {
 	int k = 0;
+	int count = 0;
 	char *str1 = malloc(sizeof(char) * size);
 	if (str1 == NULL) {
 		return -1;
@@ -19,26 +20,25 @@ int palindrom_func(char *str, int size)
 			}
 		}
 		else {	
-			//printf("%s ", str1);
-			//printf("%d\n", strlen(str1));
 			int znach = 1;
 			for (int j = 0; j < strlen(str1); j++) {
-				//printf("%d  ", str1[j]);
-				//printf("%d\n", str1[strlen(str1) - 1 - j]);
-				if (((str1[j]) != (str1[strlen(str1) - 1 - j])) && ((str1[j]) != (str1[strlen(str1) - 1 - j] - 32)) && ((str1[j] - 32) != (str1[strlen(str1) - 1 - j]))) {
+				if (((str1[j]) != (str1[strlen(str1) - 1 - j])) 
+					&& ((str1[j]) != (str1[strlen(str1) - 1 - j] - 32)) 
+						&& ((str1[j] - 32) != (str1[strlen(str1) - 1 - j]))) {
 					znach = 0;
 				}
 			}
 			if (znach) {
 				printf("%s", str1);
 				printf("\n");
+				count++;
 			}
 			memset(str1, 0 ,strlen(str1));
 			k = 0;
 		}
 	}
 	free(str1);
-	return 0;
+	return count;
 }
 
 int delete_punct(char *buffer, int size)
@@ -53,7 +53,7 @@ int delete_punct(char *buffer, int size)
 	while (ix < size) {
 		if((buffer[ix] != '.' && buffer[ix] != '!' && buffer[ix] != '?')){
 			//printf("%c", buffer[ix]);
-			if(!(ispunct(buffer[ix]) || (isdigit(buffer[ix]) || (buffer[ix] == '\n')))){
+			if(!(ispunct(buffer[ix]) || (buffer[ix] == '\n'))){
 				str[is] = buffer[ix];
 				is++;
 			}			
@@ -75,41 +75,46 @@ int process(const char *file_name)
 	if (a == NULL) {
 		return -1;
 	}
-	FILE *b;
-	b = fopen("final.txt","w");
-	if (b == NULL) {
-		return -1;
-	}
 
 	//узнаём длину файла в байтах
 	fseek(a, 0, SEEK_END);
 	long int size = ftell(a);
-	printf("Size = %li\n", size);
+	//printf("Size = %li\n", size);
+	if (size == 0) {
+		printf("Memory allocation error, the file does not contain text\n");
+		return 0;
+	}
 	rewind(a);
 	//выделяем память для хранения содержимого файла	
-	char *buffer = malloc(sizeof(char) * (size));
+	char *buffer;
+	buffer = malloc(sizeof(char) * (size));
 	if (buffer == NULL) {
-		return -1;
+		printf("Memory allocation error, the file does not contain text\n");
+		return 0;
 	}
-
 	//считываем файл в массив
 	size_t result = fread(buffer, 1, size, a);
 	if (result != size ) {
 		return -1;
 	}
+	printf("Text:\n%s", buffer);
 	//удаляем все знаки препинания и цифры
 	if (delete_punct(buffer, size) == -1) {
 		return -1;
 	}
-	printf("%s\n", buffer);
 	printf("Palindroms: \n");
 	//поиск палиндромов
-	if (palindrom_func(buffer, strlen(buffer)) == -1) {
-		return -1;
+	int ind = palindrom(buffer, strlen(buffer));
+	if (ind == -1 ) {
+		printf("Memory allocation error, the file does not contain text\n");
+		return 0;
+	}
+	else if (ind == 0) {
+		printf("The text does not contain palindrome suggestions\n");
+		return 0;
 	}
 	free(buffer);
 	fclose(a);
-	fclose(b);
 	return 0;
 }
 
